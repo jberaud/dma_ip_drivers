@@ -4379,7 +4379,7 @@ void *xdma_device_open(const char *mname, struct pci_dev *pdev, int *user_max,
 	rv = pci_enable_device(pdev);
 	if (rv) {
 		dbg_init("pci_enable_device() failed, %d.\n", rv);
-		goto err_enable;
+		goto err_free;
 	}
 
 	/* keep INTx enabled */
@@ -4402,15 +4402,15 @@ void *xdma_device_open(const char *mname, struct pci_dev *pdev, int *user_max,
 
 	rv = request_regions(xdev, pdev);
 	if (rv)
-		goto err_regions;
+		goto err_enable;
 
 	rv = map_bars(xdev, pdev);
 	if (rv)
-		goto err_map;
+		goto err_regions;
 
 	rv = set_dma_mask(pdev);
 	if (rv)
-		goto err_mask;
+		goto err_map;
 
 	check_nonzero_interrupt_status(xdev);
 	/* explicitely zero all interrupt enable masks */
@@ -4420,15 +4420,15 @@ void *xdma_device_open(const char *mname, struct pci_dev *pdev, int *user_max,
 
 	rv = probe_engines(xdev);
 	if (rv)
-		goto err_engines;
+		goto err_mask;
 
 	rv = enable_msi_msix(xdev, pdev);
 	if (rv < 0)
-		goto err_enable_msix;
+		goto err_engines;
 
 	rv = irq_setup(xdev, pdev);
 	if (rv < 0)
-		goto err_interrupts;
+		goto err_enable_msix;
 
 	if (!poll_mode)
 		channel_interrupts_enable(xdev, ~0);
@@ -4443,8 +4443,6 @@ void *xdma_device_open(const char *mname, struct pci_dev *pdev, int *user_max,
 	xdma_device_flag_clear(xdev, XDEV_FLAG_OFFLINE);
 	return (void *)xdev;
 
-err_interrupts:
-	irq_teardown(xdev);
 err_enable_msix:
 	disable_msi_msix(xdev, pdev);
 err_engines:
@@ -4459,6 +4457,7 @@ err_regions:
 		pci_disable_device(pdev);
 err_enable:
 	xdev_list_remove(xdev);
+err_free:
 	kfree(xdev);
 	return NULL;
 }
