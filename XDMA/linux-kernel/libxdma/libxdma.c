@@ -610,10 +610,11 @@ static u32 xdma_get_next_adj(unsigned int remaining_desc, u32 desc_lo)
 {
 	u32 next_adj, max_adj_4k;
 
+    pr_err("%s: remaining %u, desc_lo 0x%x\n", __func__, remaining_desc, desc_lo);
 	if (!remaining_desc)
 		return 0;
 
-	next_adj = min((u32)(remaining_desc - 1), MAX_EXTRA_ADJ);
+	next_adj = (remaining_desc - 1) % (MAX_EXTRA_ADJ + 1);
 	max_adj_4k = (0x1000 - ((le32_to_cpu(desc_lo)) & 0xFFF)) / 32 - 1;
 	return min(next_adj, max_adj_4k);
 }
@@ -698,10 +699,10 @@ static struct xdma_transfer *engine_start(struct xdma_engine *engine)
 		       (unsigned long)(&engine->sgdma_regs->first_desc_hi) -
 			       (unsigned long)(&engine->sgdma_regs));
 
-	next_adj = xdma_get_next_adj(transfer->desc_adjacent - 1,
+	next_adj = xdma_get_next_adj(transfer->desc_adjacent,
 				     cpu_to_le32(PCI_DMA_L(transfer->desc_bus)));
 
-	dbg_tfr("iowrite32(0x%08x to 0x%p) (first_desc_adjacent)\n", next_adj,
+	pr_err("iowrite32(0x%08x to 0x%p) (first_desc_adjacent)\n", next_adj,
 		(void *)&engine->sgdma_regs->first_desc_adjacent);
 
 	write_register(
@@ -3234,6 +3235,7 @@ static int transfer_init(struct xdma_engine *engine,
 	for (i = 0; i < xfer->desc_num; i++) {
 		u32 next_adj = xdma_get_next_adj(xfer->desc_num - i - 1,
 						(xfer->desc_virt + i)->next_lo);
+        pr_err("set next adj at index %d to %u\n", i, next_adj);
 		xdma_desc_adjacent(xfer->desc_virt + i, next_adj);
 	}
 
@@ -3296,6 +3298,7 @@ static int transfer_init_cyclic(struct xdma_engine *engine,
 	for (i = 0; i < xfer->desc_num; i++) {
 		u32 next_adj = xdma_get_next_adj(xfer->desc_num - i - 1,
 						(xfer->desc_virt + i)->next_lo);
+        pr_err("set next adj at index %d to %u\n", i, next_adj);
 		xdma_desc_adjacent(xfer->desc_virt + i, next_adj);
 	}
 
