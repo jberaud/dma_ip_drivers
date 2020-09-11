@@ -57,9 +57,9 @@
  * interrupts per engine, rad2_vul.sv:237
  * .REG_IRQ_OUT	(reg_irq_from_ch[(channel*2) +: 2]),
  */
-#define XDMA_ENG_IRQ_NUM	(1)
-#define MAX_EXTRA_ADJ		(0x3F)
-#define RX_STATUS_EOP		(1)
+#define XDMA_ENG_IRQ_NUM (1)
+#define MAX_EXTRA_ADJ (0x3FU)
+#define RX_STATUS_EOP (1)
 
 /* Target internal components on XDMA control BAR */
 #define XDMA_OFS_INT_CTRL	(0x2000UL)
