@@ -606,17 +606,17 @@ static int engine_start_mode_config(struct xdma_engine *engine)
  * remaining number of descriptors and the lower bits of the address, in order
  * to calculate the number of descriptors untill next page boundary.
  */
-static u32 xdma_get_next_adj(unsigned int remaining_desc, u32 desc_lo)
+static u32 xdma_get_next_adj(unsigned int remaining, u32 desc_lo)
 {
-	u32 next_adj, max_adj_4k;
+	unsigned int next_index;
 
-    pr_err("%s: remaining %u, desc_lo 0x%x\n", __func__, remaining_desc, desc_lo);
-	if (!remaining_desc)
+	pr_err("%s: remaining_desc %u, desc_lo 0x%x\n",__func__,remaining, desc_lo);
+
+	if (remaining <= 1)
 		return 0;
 
-	next_adj = (remaining_desc - 1) % (MAX_EXTRA_ADJ + 1);
-	max_adj_4k = (0x1000 - ((le32_to_cpu(desc_lo)) & 0xFFF)) / 32 - 1;
-	return min(next_adj, max_adj_4k);
+	next_index = ((desc_lo & (PAGE_SIZE - 1)) >> 5) % DESC_BLOCK_SIZE;
+	return min(DESC_BLOCK_SIZE - next_index - 1, remaining - 1);
 }
 
 
@@ -3235,6 +3235,7 @@ static int transfer_init(struct xdma_engine *engine,
 	for (i = 0; i < xfer->desc_num; i++) {
 		u32 next_adj = xdma_get_next_adj(xfer->desc_num - i - 1,
 						(xfer->desc_virt + i)->next_lo);
+
         pr_err("set next adj at index %d to %u\n", i, next_adj);
 		xdma_desc_adjacent(xfer->desc_virt + i, next_adj);
 	}
