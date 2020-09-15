@@ -619,7 +619,6 @@ static u32 xdma_get_next_adj(unsigned int remaining, u32 desc_lo)
 	return min(DESC_BLOCK_SIZE - next_index - 1, remaining - 1);
 }
 
-
 /**
  * engine_start() - start an idle engine with its first transfer on queue
  *
@@ -2440,8 +2439,6 @@ static int transfer_desc_init(struct xdma_transfer *transfer, int count)
 	struct xdma_desc *desc_virt = transfer->desc_virt;
 	dma_addr_t desc_bus = transfer->desc_bus;
 	int i;
-	int adj = count - 1;
-	int extra_adj;
 	u32 temp_control;
 
 	if (count > XDMA_TRANSFER_MAX_DESC) {
@@ -2460,20 +2457,7 @@ static int transfer_desc_init(struct xdma_transfer *transfer, int count)
 		desc_virt[i].next_hi = cpu_to_le32(PCI_DMA_H(desc_bus));
 		desc_virt[i].bytes = cpu_to_le32(0);
 
-		/* any adjacent descriptors? */
-		if (adj > 0) {
-			extra_adj = adj - 1;
-			if (extra_adj > MAX_EXTRA_ADJ)
-				extra_adj = MAX_EXTRA_ADJ;
-
-			adj--;
-		} else {
-			extra_adj = 0;
-		}
-
-		temp_control = DESC_MAGIC | (extra_adj << 8);
-
-		desc_virt[i].control = cpu_to_le32(temp_control);
+		desc_virt[i].control = cpu_to_le32(DESC_MAGIC);
 	}
 	/* { i = number - 1 } */
 	/* zero the last descriptor next pointer */

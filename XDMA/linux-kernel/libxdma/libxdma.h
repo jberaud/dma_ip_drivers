@@ -58,7 +58,6 @@
  * .REG_IRQ_OUT	(reg_irq_from_ch[(channel*2) +: 2]),
  */
 #define XDMA_ENG_IRQ_NUM (1)
-#define MAX_EXTRA_ADJ (0x3FU)
 #define DESC_BLOCK_SIZE 0x40
 #define RX_STATUS_EOP (1)
 
